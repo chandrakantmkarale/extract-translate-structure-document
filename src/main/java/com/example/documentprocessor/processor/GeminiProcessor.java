@@ -1,8 +1,8 @@
 package com.example.documentprocessor.processor;
 
-import com.example.documentprocessor.shared.model.DocumentRecord;
-import com.example.documentprocessor.shared.model.ProcessingResult;
-import com.example.documentprocessor.shared.service.GeminiService;
+import com.example.documentprocessor.model.DocumentRecord;
+import com.example.documentprocessor.model.ProcessingResult;
+import com.example.documentprocessor.service.GeminiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;

@@ -28,7 +28,7 @@ public class KeyRotationService {
     @Value("${app.local-testing:true}")
     private boolean localTesting;
 
-    @Value("${local.keys-csv-path:./test_data/gemini_keys.csv}")
+    @Value("${app.local.keys-csv-path:./test_data/gemini_keys.csv}")
     private String localKeysCsvPath;
 
     @Value("${google.drive.keys-csv-file-id:}")

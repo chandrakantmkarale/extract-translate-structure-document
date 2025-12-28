@@ -27,7 +27,9 @@ public class OrchestratorRoute extends RouteBuilder {
             .post()
             .consumes("application/json")
             .produces("application/json")
-            .route()
+            .to("direct:orchestrator-main");
+
+        from("direct:orchestrator-main")
             .routeId("orchestrator-main")
             .unmarshal().json(JsonLibrary.Jackson, DocumentRecord.class)
             .process(exchange -> {
@@ -39,8 +41,7 @@ public class OrchestratorRoute extends RouteBuilder {
             .to("direct:validate-csv")
             .to("direct:process-batch")
             .to("direct:write-results")
-            .marshal().json(JsonLibrary.Jackson)
-            .endRest();
+            .marshal().json(JsonLibrary.Jackson);
 
         // Read CSV file
         from("direct:read-csv")

@@ -3,7 +3,7 @@
 
 app:
   local-testing: true
-  log-local-dir: d:\n8n-learning\n8nworkflow\data\logs
+  log-local-dir: d:/n8n-learning/n8nworkflow/data/logs
 
   processing:
     batch-size: 1
@@ -11,10 +11,10 @@ app:
     retry-delay: 5000
 
   local:
-    docs-path: d:\n8n-learning\n8nworkflow\test_data\input
-    output-path: d:\n8n-learning\n8nworkflow\test_data\output
-    keys-csv-path: d:\n8n-learning\n8nworkflow\test_data\gemini_keys.csv
-    error-log-path: d:\n8n-learning\n8nworkflow\test_data\output\error_logs
+    docs-path: d:/n8n-learning/n8nworkflow/test_data/input
+    output-path: d:/n8n-learning/n8nworkflow/test_data/output
+    keys-csv-path: d:/n8n-learning/n8nworkflow/test_data/gemini_keys.csv
+    error-log-path: d:/n8n-learning/n8nworkflow/test_data/output/error_logs
 
   google:
     drive:
@@ -42,6 +42,10 @@ app:
 
   gemini:
     api-key: ${GEMINI_API_KEY:dev-gemini-key}
+    api:
+      upload-url: https://generativelanguage.googleapis.com/upload/v1beta/files
+      generate-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+      cleanup-url: https://generativelanguage.googleapis.com/v1beta/files
 
   workflow:
     ids:
