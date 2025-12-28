@@ -1,0 +1,65 @@
+# Production Profile Configuration
+# This profile uses Google Drive/Docs APIs and requires all environment variables to be set
+
+app:
+  local-testing: false
+  log-local-dir: ${LOG_LOCAL_DIR}
+
+  processing:
+    batch-size: ${PROCESSING_BATCH_SIZE:1}
+    max-retries: ${PROCESSING_MAX_RETRIES:3}
+    retry-delay: ${PROCESSING_RETRY_DELAY:5000}
+
+  google:
+    drive:
+      cred-id: ${GOOGLE_DRIVE_CRED_ID}
+      api-key: ${GOOGLE_DRIVE_API_KEY}
+      watch-folder-id: ${GOOGLE_DRIVE_WATCH_FOLDER_ID}
+      processing-folder-id: ${GOOGLE_DRIVE_PROCESSING_FOLDER_ID}
+      processed-results-folder-id: ${GOOGLE_DRIVE_PROCESSED_RESULTS_FOLDER_ID}
+      export-ocr-folder-id: ${EXPORT_OCR_FOLDER_ID}
+      export-translate-folder-id: ${EXPORT_TRANSLATE_FOLDER_ID}
+      export-persist-folder-id: ${EXPORT_PERSIST_FOLDER_ID}
+      error-log-folder-id: ${ERROR_LOG_FOLDER_ID}
+      keys-csv-file-id: ${KEYS_CSV_FILE_ID}
+      prompts-folder-id: ${PROMPTS_FOLDER_ID}
+      translation-corrections-folder-id: ${TRANSLATION_CORRECTIONS_FOLDER_ID}
+
+    docs:
+      cred-id: ${GOOGLE_DOCS_CRED_ID}
+      api-key: ${GOOGLE_DOCS_API_KEY}
+
+  email:
+    alert-address: ${ALERT_EMAIL_ADDRESS}
+    cred-id: ${GMAIL_CRED_ID}
+    api-key: ${GMAIL_API_KEY}
+
+  gemini:
+    api-key: ${GEMINI_API_KEY}
+
+  workflow:
+    ids:
+      gemini-vision: ${SUB_WORKFLOW_GEMINI_VISION_ID}
+      translate: ${SUB_WORKFLOW_TRANSLATE_ID}
+      persistence: ${SUB_WORKFLOW_PERSISTENCE_ID}
+      key-rotation: ${SUB_WORKFLOW_KEYROT_ID}
+      fetch-doc: ${SUB_WORKFLOW_FETCHDOC_ID}
+      export-doc: ${SUB_WORKFLOW_EXPORTDOC_ID}
+      error-log: ${SUB_WORKFLOW_ERRORLOG_ID}
+      rate-limit: ${SUB_WORKFLOW_RATELIMIT_ID}
+      logger: ${SUB_WORKFLOW_LOGGER_ID}
+      structure: ${SUB_WORKFLOW_STRUCTURE_ID}
+
+  files:
+    prompt-ocr-filename: ${PROMPT_OCR_FILENAME}
+    prompt-prefix-translate: ${PROMPT_PREFIX_TRANSLATE}
+    translation-corrections-prefix: ${TRANSLATION_CORRECTIONS_PREFIX}
+
+logging:
+  level:
+    com.example.documentprocessor: ${LOG_LEVEL_APP:INFO}
+    org.apache.camel: ${LOG_LEVEL_CAMEL:WARN}
+    org.springframework: ${LOG_LEVEL_SPRING:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

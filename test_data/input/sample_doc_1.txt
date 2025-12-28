@@ -1,0 +1,8 @@
+This is a sample document for testing the OCR functionality.
+
+It contains some text that should be extracted and processed.
+
+The document processing pipeline will:
+1. Extract this text using OCR
+2. Translate it to target languages
+3. Structure and persist the results

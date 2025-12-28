@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: extract-translate-structure-document
+  profiles:
+    active: dev
+
+camel:
+  springboot:
+    main-run-controller: true
+  rest:
+    binding-mode: json
+  component:
+    servlet:
+      mapping:
+        context-path: /api/*
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.example.documentprocessor: INFO
+    org.apache.camel: WARN
+    org.springframework: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${app.log-local-dir}/extract-translate-structure-document.log

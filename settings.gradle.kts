@@ -1,0 +1,1 @@
+rootProject.name = "extract-translate-structure-document"

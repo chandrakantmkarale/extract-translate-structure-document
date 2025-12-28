@@ -1,0 +1,75 @@
+# Development Profile Configuration
+# This profile uses local file system for all operations and includes default values
+
+app:
+  local-testing: true
+  log-local-dir: d:\n8n-learning\n8nworkflow\data\logs
+
+  processing:
+    batch-size: 1
+    max-retries: 3
+    retry-delay: 5000
+
+  local:
+    docs-path: d:\n8n-learning\n8nworkflow\test_data\input
+    output-path: d:\n8n-learning\n8nworkflow\test_data\output
+    keys-csv-path: d:\n8n-learning\n8nworkflow\test_data\gemini_keys.csv
+    error-log-path: d:\n8n-learning\n8nworkflow\test_data\output\error_logs
+
+  google:
+    drive:
+      cred-id: MP0Lcz599NM3oKWL
+      api-key: ${GOOGLE_DRIVE_API_KEY:dev-drive-key}
+      watch-folder-id: ${GOOGLE_DRIVE_WATCH_FOLDER_ID:dev-watch-folder}
+      processing-folder-id: ${GOOGLE_DRIVE_PROCESSING_FOLDER_ID:dev-processing-folder}
+      processed-results-folder-id: 1uDHm5dOFgKsFZ8u7T04OZtTVOAY8PKRh
+      export-ocr-folder-id: ${EXPORT_OCR_FOLDER_ID:dev-ocr-folder}
+      export-translate-folder-id: ${EXPORT_TRANSLATE_FOLDER_ID:dev-translate-folder}
+      export-persist-folder-id: ${EXPORT_PERSIST_FOLDER_ID:dev-persist-folder}
+      error-log-folder-id: 1ZqKa4EnXhdMlbq6Wh_0jho9Qb42UqcCF
+      keys-csv-file-id: 19B-lLAyeK9ogLSoK5E_b0o8bnbQ_REWo
+      prompts-folder-id: 1ksRa7ybp__QPo-J7Hqul1n6NKtD8wY8w
+      translation-corrections-folder-id: 1m7heGQKbeZf7hKbnlkCBx6lMnlGryCzz
+
+    docs:
+      cred-id: q0lSoKWE4f4Sjw4w
+      api-key: ${GOOGLE_DOCS_API_KEY:dev-docs-key}
+
+  email:
+    alert-address: chandrakantk@gmail.com
+    cred-id: pYp6fhsNvtsqKCXU
+    api-key: ${GMAIL_API_KEY:dev-email-key}
+
+  gemini:
+    api-key: ${GEMINI_API_KEY:dev-gemini-key}
+
+  workflow:
+    ids:
+      gemini-vision: jpasv44KNhwS4QMl
+      translate: o9AJdzVkeq7t9Mnr
+      persistence: 5uRcYsYc2M2QkNFZ
+      key-rotation: kE6dflX1zdZf4uLC
+      fetch-doc: Z4ZShypJB0soKdFy
+      export-doc: Mq5EwlTainkloqhu
+      error-log: 4SuT1Z7km0u9TdK6
+      rate-limit: waqc8vvFktQ99GjG
+      logger: 1ys2jOntHRJEJvbA
+      structure: KqNDsYaw5RqXHjiJ
+
+  files:
+    prompt-ocr-filename: PROMPT_2_EXTRACT_TEXT_FROM_PDF_HINDI.DOCX
+    prompt-prefix-translate: PROMPT_2_TRANSLATE_TEXT_FROM_HINDI_2_
+    prompt-prefix-structure: PROMPT_2_STRUCTURE_TRANSLATED_TEXT_
+    translation-corrections-prefix: human_reviewed_translation_corrections_
+    filename-suffix-extracted: _EXTRACTED_TEXT.docx
+    filename-suffix-translated: _TRANSLATED_TEXT.docx
+    filename-suffix-structured: _STRUCTURED_TEXT.docx
+
+logging:
+  level:
+    com.example.documentprocessor: DEBUG
+    org.apache.camel: INFO
+    org.springframework: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

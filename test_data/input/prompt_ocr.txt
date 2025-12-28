@@ -1,0 +1,1 @@
+Extract all text from this document. Provide the text content exactly as it appears in the document. Do not add any additional comments, explanations, or formatting. Just return the raw text content.
