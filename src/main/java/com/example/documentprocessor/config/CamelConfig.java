@@ -1,6 +1,7 @@
 package com.example.documentprocessor.config;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.spring.boot.CamelContextConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -8,10 +9,18 @@ import org.springframework.context.annotation.Configuration;
 public class CamelConfig {
 
     @Bean
-    public CamelContext configureCamelContext(CamelContext camelContext) {
-        camelContext.getGlobalOptions().put("CamelJacksonEnableTypeConverter", "true");
-        camelContext.getGlobalOptions().put("CamelJacksonTypeConverterToPojo", "true");
+    public CamelContextConfiguration camelContextConfiguration() {
+        return new CamelContextConfiguration() {
+            @Override
+            public void beforeApplicationStart(CamelContext camelContext) {
+                camelContext.getGlobalOptions().put("CamelJacksonEnableTypeConverter", "true");
+                camelContext.getGlobalOptions().put("CamelJacksonTypeConverterToPojo", "true");
+            }
 
-        return camelContext;
+            @Override
+            public void afterApplicationStart(CamelContext camelContext) {
+                // No additional configuration needed
+            }
+        };
     }
 }

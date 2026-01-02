@@ -26,7 +26,7 @@ public class OcrRoute extends RouteBuilder {
     @Value("${app.local.docs-path:./test_data/input}")
     private String localDocsPath;
 
-    @Value("${google.drive.api.base-url:https://www.googleapis.com/drive/v3}")
+    @Value("${app.google.drive.api.base-url:https://www.googleapis.com/drive/v3}")
     private String driveApiBaseUrl;
 
     @Override

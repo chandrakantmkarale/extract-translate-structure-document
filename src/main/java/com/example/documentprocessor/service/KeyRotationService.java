@@ -31,7 +31,7 @@ public class KeyRotationService {
     @Value("${app.local.keys-csv-path:./test_data/gemini_keys.csv}")
     private String localKeysCsvPath;
 
-    @Value("${google.drive.keys-csv-file-id:}")
+    @Value("${app.google.drive.keys-csv-file-id:}")
     private String keysCsvFileId;
 
     // In-memory key rotation state

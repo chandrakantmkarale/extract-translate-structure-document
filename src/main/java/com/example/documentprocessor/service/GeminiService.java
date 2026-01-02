@@ -22,13 +22,13 @@ public class GeminiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${gemini.api.upload-url}")
+    @Value("${app.gemini.api.upload-url}")
     private String uploadUrl;
 
-    @Value("${gemini.api.generate-url}")
+    @Value("${app.gemini.api.generate-url}")
     private String generateUrl;
 
-    @Value("${gemini.api.cleanup-url}")
+    @Value("${app.gemini.api.cleanup-url}")
     private String cleanupUrl;
 
     public ProcessingResult uploadFile(byte[] fileData, String mimeType, String apiKey) {

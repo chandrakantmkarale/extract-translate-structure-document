@@ -3,10 +3,22 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Debug (Launch) - Application",
+            "name": "Launch Document Processor (Dev Profile)",
             "request": "launch",
             "mainClass": "com.example.documentprocessor.Application",
-            "projectName": "extract-translate-structure-document"
+            "projectName": "extract-translate-structure-document",
+            "vmArgs": "-Dspring.profiles.active=dev",
+            "env": {
+                "GOOGLE_DRIVE_API_KEY": "dev-drive-key",
+                "GOOGLE_DRIVE_WATCH_FOLDER_ID": "dev-watch-folder",
+                "GOOGLE_DRIVE_PROCESSING_FOLDER_ID": "dev-processing-folder",
+                "EXPORT_OCR_FOLDER_ID": "dev-ocr-folder",
+                "EXPORT_TRANSLATE_FOLDER_ID": "dev-translate-folder",
+                "EXPORT_PERSIST_FOLDER_ID": "dev-persist-folder",
+                "GOOGLE_DOCS_API_KEY": "dev-docs-key",
+                "GMAIL_API_KEY": "dev-email-key",
+                "GEMINI_API_KEY": "dev-gemini-key"
+            }
         }
     ]
 }

@@ -1,6 +1,10 @@
 # Development Profile Configuration
 # This profile uses local file system for all operations and includes default values
 
+spring:
+  main:
+    allow-circular-references: true
+
 app:
   local-testing: true
   log-local-dir: d:/n8n-learning/n8nworkflow/data/logs
