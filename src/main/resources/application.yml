@@ -8,6 +8,7 @@ camel:
   springboot:
     main-run-controller: true
   rest:
+    component: servlet
     binding-mode: json
   component:
     servlet:

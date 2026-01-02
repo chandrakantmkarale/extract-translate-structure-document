@@ -5,6 +5,7 @@ import com.example.documentprocessor.service.GoogleDriveService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class PersistenceRoute extends RouteBuilder {
         // Perform persistence route
         from("direct:perform-persistence")
             .routeId("perform-persistence")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing persistence")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
 

@@ -5,9 +5,12 @@ spring:
   main:
     allow-circular-references: true
 
+server:
+  port: 8082
+
 app:
   local-testing: true
-  log-local-dir: d:/n8n-learning/n8nworkflow/data/logs
+  log-local-dir: logs
 
   processing:
     batch-size: 1

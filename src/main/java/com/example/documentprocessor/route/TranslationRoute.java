@@ -5,6 +5,7 @@ import com.example.documentprocessor.processor.GeminiProcessor;
 import com.example.documentprocessor.service.GoogleDriveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class TranslationRoute extends RouteBuilder {
         // Fetch translation prompt route
         from("direct:fetch-translation-prompt")
             .routeId("fetch-translation-prompt")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching translation prompt")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 String targetLangs = record.getTargetLangs();
@@ -58,6 +60,7 @@ public class TranslationRoute extends RouteBuilder {
         // Perform translation route
         from("direct:perform-translation")
             .routeId("perform-translation")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing translation")
             .setHeader("operation", constant("translate"))
             .process(geminiProcessor)
             .end();
@@ -65,6 +68,7 @@ public class TranslationRoute extends RouteBuilder {
         // Export translation results route
         from("direct:export-translation")
             .routeId("export-translation")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Exporting translation results")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 String targetLang = exchange.getIn().getHeader("targetLanguage", String.class);

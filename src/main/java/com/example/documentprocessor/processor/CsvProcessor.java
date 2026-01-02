@@ -29,6 +29,7 @@ public class CsvProcessor implements Processor {
     @Override
     public void process(Exchange exchange) throws Exception {
         String operation = exchange.getIn().getHeader("operation", String.class);
+        log.info("Processing CSV operation: {}", operation);
 
         switch (operation) {
             case "read":
@@ -75,6 +76,9 @@ public class CsvProcessor implements Processor {
                 .allStagesSuccess(true)
                 .errors(new ArrayList<>())
                 .build();
+
+            log.info("Read CSV record {}: fileId={}, targetLangs={}, bookName={}, status={}",
+                rowIndex, record.getFileId(), record.getTargetLangs(), record.getBookName(), record.getStatus());
 
             records.add(record);
             rowIndex++;

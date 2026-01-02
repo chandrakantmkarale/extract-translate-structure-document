@@ -5,6 +5,7 @@ import com.example.documentprocessor.processor.CsvProcessor;
 import com.example.documentprocessor.service.KeyRotationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,10 @@ public class OrchestratorRoute extends RouteBuilder {
             .process(exchange -> {
                 DocumentRecord request = exchange.getIn().getBody(DocumentRecord.class);
                 String csvPath = request.getFileId(); // Using fileId as csvPath for now
+                String sessionId = java.util.UUID.randomUUID().toString();
+                exchange.getIn().setHeader("sessionId", sessionId);
                 exchange.getIn().setHeader("csvPath", csvPath);
+                log.info("Starting processing session {} for CSV: {}", sessionId, csvPath);
             })
             .to("direct:read-csv")
             .to("direct:validate-csv")
@@ -46,6 +50,7 @@ public class OrchestratorRoute extends RouteBuilder {
         // Read CSV file
         from("direct:read-csv")
             .routeId("read-csv")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Reading CSV")
             .setHeader("operation", constant("read"))
             .process(csvProcessor)
             .end();
@@ -53,6 +58,7 @@ public class OrchestratorRoute extends RouteBuilder {
         // Validate CSV structure
         from("direct:validate-csv")
             .routeId("validate-csv")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Validating CSV")
             .setHeader("operation", constant("validate"))
             .process(csvProcessor)
             .end();
@@ -60,6 +66,7 @@ public class OrchestratorRoute extends RouteBuilder {
         // Process documents in batch
         from("direct:process-batch")
             .routeId("process-batch")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Processing batch")
             .split(body()).parallelProcessing()
                 .process(exchange -> {
                     DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
@@ -129,6 +136,7 @@ public class OrchestratorRoute extends RouteBuilder {
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 record.setCurrentStage("OCR");
+                log.info("Session ${header.sessionId} - Starting OCR processing for file: {}", record.getFileId());
                 exchange.getIn().setBody(record);
             })
             .to("direct:fetch-document")
@@ -144,6 +152,7 @@ public class OrchestratorRoute extends RouteBuilder {
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 record.setCurrentStage("Translation");
+                log.info("Session ${header.sessionId} - Starting translation processing for file: {}", record.getFileId());
                 exchange.getIn().setBody(record);
             })
             .to("direct:fetch-translation-prompt")
@@ -158,6 +167,7 @@ public class OrchestratorRoute extends RouteBuilder {
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 record.setCurrentStage("Structure");
+                log.info("Session ${header.sessionId} - Starting structure processing for file: {}", record.getFileId());
                 exchange.getIn().setBody(record);
             })
             .to("direct:perform-structuring")
@@ -171,6 +181,7 @@ public class OrchestratorRoute extends RouteBuilder {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 record.setCurrentStage("Persistence");
                 record.setProcessingEndTime(java.time.LocalDateTime.now());
+                log.info("Session ${header.sessionId} - Starting persistence processing for file: {}", record.getFileId());
                 exchange.getIn().setBody(record);
             })
             .to("direct:perform-persistence")
@@ -180,6 +191,7 @@ public class OrchestratorRoute extends RouteBuilder {
         // Write final results to CSV
         from("direct:write-results")
             .routeId("write-results")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Writing results")
             .process(exchange -> {
                 @SuppressWarnings("unchecked")
                 List<DocumentRecord> records = exchange.getIn().getBody(List.class);
@@ -202,15 +214,15 @@ public class OrchestratorRoute extends RouteBuilder {
             .end();
 
         // Placeholder routes for sub-workflows (to be implemented)
-        from("direct:fetch-document").routeId("fetch-document").log("Fetching document").end();
-        from("direct:fetch-ocr-prompt").routeId("fetch-ocr-prompt").log("Fetching OCR prompt").end();
-        from("direct:perform-ocr").routeId("perform-ocr").log("Performing OCR").end();
-        from("direct:export-ocr").routeId("export-ocr").log("Exporting OCR results").end();
-        from("direct:fetch-translation-prompt").routeId("fetch-translation-prompt").log("Fetching translation prompt").end();
-        from("direct:perform-translation").routeId("perform-translation").log("Performing translation").end();
-        from("direct:export-translation").routeId("export-translation").log("Exporting translation results").end();
-        from("direct:perform-structuring").routeId("perform-structuring").log("Performing structuring").end();
-        from("direct:perform-persistence").routeId("perform-persistence").log("Performing persistence").end();
-        from("direct:log-stage").routeId("log-stage").log("Logging stage completion").end();
+        from("direct:fetch-document").routeId("fetch-document").log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching document: ${body.fileId}").end();
+        from("direct:fetch-ocr-prompt").routeId("fetch-ocr-prompt").log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching OCR prompt for file: ${body.fileId}").end();
+        from("direct:perform-ocr").routeId("perform-ocr").log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing OCR on file: ${body.fileId}").end();
+        from("direct:export-ocr").routeId("export-ocr").log(LoggingLevel.INFO, "Session ${header.sessionId} - Exporting OCR results for file: ${body.fileId}").end();
+        from("direct:fetch-translation-prompt").routeId("fetch-translation-prompt").log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching translation prompt for file: ${body.fileId}").end();
+        from("direct:perform-translation").routeId("perform-translation").log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing translation on file: ${body.fileId}").end();
+        from("direct:export-translation").routeId("export-translation").log(LoggingLevel.INFO, "Session ${header.sessionId} - Exporting translation results for file: ${body.fileId}").end();
+        from("direct:perform-structuring").routeId("perform-structuring").log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing structuring on file: ${body.fileId}").end();
+        from("direct:perform-persistence").routeId("perform-persistence").log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing persistence for file: ${body.fileId}").end();
+        from("direct:log-stage").routeId("log-stage").log(LoggingLevel.INFO, "Session ${header.sessionId} - Completed stage for file: ${body.fileId}").end();
     }
 }

@@ -28,6 +28,8 @@ public class GeminiProcessor implements Processor {
             throw new IllegalArgumentException("DocumentRecord is required");
         }
 
+        log.info("Processing Gemini operation: {} for record: {}", operation, record.getFileId());
+
         ProcessingResult result;
 
         switch (operation) {

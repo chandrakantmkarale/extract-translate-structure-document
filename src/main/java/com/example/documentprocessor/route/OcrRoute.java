@@ -7,6 +7,7 @@ import com.example.documentprocessor.service.GeminiService;
 import com.example.documentprocessor.service.GoogleDriveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ public class OcrRoute extends RouteBuilder {
         // Fetch document route
         from("direct:fetch-document")
             .routeId("fetch-document")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching document")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 String fileId = record.getFileId();
@@ -78,6 +80,7 @@ public class OcrRoute extends RouteBuilder {
         // Fetch OCR prompt route
         from("direct:fetch-ocr-prompt")
             .routeId("fetch-ocr-prompt")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Fetching OCR prompt")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
 
@@ -108,6 +111,7 @@ public class OcrRoute extends RouteBuilder {
         // Perform OCR route
         from("direct:perform-ocr")
             .routeId("perform-ocr")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing OCR")
             .setHeader("operation", constant("ocr"))
             .process(geminiProcessor)
             .end();
@@ -115,6 +119,7 @@ public class OcrRoute extends RouteBuilder {
         // Export OCR results route
         from("direct:export-ocr")
             .routeId("export-ocr")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Exporting OCR results")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
 

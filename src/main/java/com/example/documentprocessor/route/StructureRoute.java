@@ -2,6 +2,7 @@ package com.example.documentprocessor.route;
 
 import com.example.documentprocessor.model.DocumentRecord;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class StructureRoute extends RouteBuilder {
         // Perform structuring route
         from("direct:perform-structuring")
             .routeId("perform-structuring")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Performing structuring")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
 

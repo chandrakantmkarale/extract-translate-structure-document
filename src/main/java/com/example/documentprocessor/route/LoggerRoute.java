@@ -4,6 +4,7 @@ import com.example.documentprocessor.model.DocumentRecord;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class LoggerRoute extends RouteBuilder {
         // Log stage completion route
         from("direct:log-stage")
             .routeId("log-stage")
+            .log(LoggingLevel.INFO, "Session ${header.sessionId} - Logging stage completion")
             .process(exchange -> {
                 DocumentRecord record = exchange.getIn().getBody(DocumentRecord.class);
                 String stage = record.getCurrentStage();

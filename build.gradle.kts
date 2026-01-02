@@ -32,6 +32,7 @@ dependencies {
     // Apache Camel
     implementation("org.apache.camel.springboot:camel-spring-boot-starter:3.21.0")
     implementation("org.apache.camel:camel-rest:3.21.0")
+    implementation("org.apache.camel:camel-servlet:3.21.0")
     implementation("org.apache.camel:camel-http:3.21.0")
     implementation("org.apache.camel:camel-file:3.21.0")
     implementation("org.apache.camel:camel-csv:3.21.0")

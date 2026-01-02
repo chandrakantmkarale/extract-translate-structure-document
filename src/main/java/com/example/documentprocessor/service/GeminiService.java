@@ -47,6 +47,8 @@ public class GeminiService {
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
+            log.info("Calling Gemini upload API: {} with mimeType: {}, file size: {} bytes", uploadUrl, mimeType, fileData.length);
+
             ResponseEntity<String> response = restTemplate.exchange(
                 uploadUrl, HttpMethod.POST, requestEntity, String.class);
 
@@ -98,6 +100,8 @@ public class GeminiService {
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
+            log.info("Calling Gemini generate API: {} with prompt length: {}, fileUri: {}", generateUrl, prompt.length(), fileUri);
+
             ResponseEntity<String> response = restTemplate.exchange(
                 generateUrl, HttpMethod.POST, requestEntity, String.class);
 
@@ -134,8 +138,11 @@ public class GeminiService {
 
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
+            String fullUrl = cleanupUrl + "/" + fileName;
+            log.info("Calling Gemini cleanup API: {} for file: {}", fullUrl, fileName);
+
             ResponseEntity<Void> response = restTemplate.exchange(
-                cleanupUrl + "/" + fileName, HttpMethod.DELETE, requestEntity, Void.class);
+                fullUrl, HttpMethod.DELETE, requestEntity, Void.class);
 
             return ProcessingResult.builder()
                 .success(response.getStatusCode().is2xxSuccessful())
