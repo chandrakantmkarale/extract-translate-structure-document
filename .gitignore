@@ -7,3 +7,4 @@ build
 buildOutputCleanup
 vcs-1
 .gradle
+logs
