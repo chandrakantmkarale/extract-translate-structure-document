@@ -20,7 +20,7 @@ app:
   local:
     docs-path: d:/n8n-learning/n8nworkflow/test_data/input
     output-path: d:/n8n-learning/n8nworkflow/test_data/output
-    keys-csv-path: d:/n8n-learning/n8nworkflow/test_data/gemini_keys.csv
+    keys-csv-path: D:/n8n-learning/csvfolder/gemini_api_keys.csv
     error-log-path: d:/n8n-learning/n8nworkflow/test_data/output/error_logs
 
   google:

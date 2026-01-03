@@ -92,7 +92,7 @@ public class GeminiService {
         }
     }
 
-    public ProcessingResult performTranslation(String sourceText, String targetLanguage, String prompt, String apiKey) {
+    public ProcessingResult performTranslation(String sourceText, String targetLanguage, String prompt) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -114,7 +114,7 @@ public class GeminiService {
             log.info("Calling unified Gemini API for translation with model: {}, target language: {}",
                 modelName, targetLanguage);
 
-            String urlWithKey = generateUrl + "?key=" + apiKey;
+            String urlWithKey = generateUrl + "?key=" + geminiApiKey;
 
             ResponseEntity<String> response = restTemplate.exchange(
                 urlWithKey, HttpMethod.POST, requestEntity, String.class);

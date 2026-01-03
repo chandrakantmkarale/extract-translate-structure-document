@@ -26,7 +26,7 @@ public class GeminiProcessor {
     public ProcessingResult performTranslation(DocumentRecord record, String sourceText, String targetLanguage, String prompt) {
         log.info("Processing translation operation for record: {} to language: {}", record.getFileId(), targetLanguage);
 
-        return geminiService.performTranslation(sourceText, targetLanguage, prompt, record.getSelectedKey());
+        return geminiService.performTranslation(sourceText, targetLanguage, prompt);
     }
 
     private void updateRecordWithResult(DocumentRecord record, ProcessingResult result, String operation) {
