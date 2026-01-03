@@ -16,3 +16,17 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: ${app.log-local-dir}/extract-translate-structure-document.log
+
+# Google Service Account Configuration
+google:
+  service-account:
+    key-file: classpath:service-account-key.json  # Path to service account key file
+    email: ""  # Service account email (optional, can be read from key file)
+  application:
+    name: "Document Processor Service"
+
+# Application Configuration
+app:
+  log-local-dir: ./logs
+  output-folder-id: ""  # Google Drive folder ID for storing processed documents
+  keys-csv-file-id: ""  # Google Drive file ID for Gemini API keys CSV

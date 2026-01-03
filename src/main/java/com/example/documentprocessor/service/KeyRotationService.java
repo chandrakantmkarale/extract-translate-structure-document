@@ -26,9 +26,14 @@ public class KeyRotationService {
     private final CsvMapper csvMapper;
     private final GoogleDriveService googleDriveService;
 
-    private final boolean localTesting = true;
-    private final String localKeysCsvPath = "./test_data/gemini_keys.csv";
-    private final String keysCsvFileId = "";
+    @Value("${app.local-testing:true}")
+    private boolean localTesting;
+
+    @Value("${app.local-keys-csv-path:./test_data/gemini_keys.csv}")
+    private String localKeysCsvPath;
+
+    @Value("${app.keys-csv-file-id:}")
+    private String keysCsvFileId;
 
     // In-memory key rotation state
     private final List<String> availableKeys = new ArrayList<>();
@@ -75,7 +80,7 @@ public class KeyRotationService {
     private void loadKeys() throws IOException {
         availableKeys.clear();
 
-        if (localTesting) {
+        if (localTesting && keysCsvFileId == null || keysCsvFileId.isEmpty()) {
             loadKeysFromLocalFile();
         } else {
             loadKeysFromGoogleDrive();
@@ -105,16 +110,8 @@ public class KeyRotationService {
 
     private void loadKeysFromGoogleDrive() {
         try {
-            // This would need an access token, but for now we'll assume it's available
-            // In a real implementation, you'd get this from configuration or service account
-            String accessToken = ""; // TODO: Configure access token for key file access
-
-            if (accessToken == null || accessToken.isEmpty()) {
-                log.warn("No access token configured for Google Drive key loading");
-                return;
-            }
-
-            var downloadResult = googleDriveService.downloadFile(keysCsvFileId, accessToken);
+            // Use service account to download the keys CSV from Google Drive
+            var downloadResult = googleDriveService.downloadFile(keysCsvFileId);
             if (!downloadResult.isSuccess()) {
                 log.error("Failed to download keys CSV from Google Drive: {}", downloadResult.getError());
                 return;

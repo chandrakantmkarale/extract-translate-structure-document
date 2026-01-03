@@ -37,7 +37,8 @@ dependencies {
     // Google Cloud Vertex AI SDK (Latest)
     implementation("com.google.cloud:google-cloud-aiplatform:3.40.0")
 
-    // Google API Client for Drive
+    // Google Cloud Auth Library
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.22.0")
     implementation("com.google.api-client:google-api-client:2.4.0")
     implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
 

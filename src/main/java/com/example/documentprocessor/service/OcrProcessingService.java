@@ -24,7 +24,7 @@ public class OcrProcessingService {
             log.info("Session {} - Starting OCR processing for file: {}", sessionId, record.getFileId());
 
             // Download the file from Google Drive
-            var downloadResult = googleDriveService.downloadFile(record.getFileId(), record.getAccessToken());
+            var downloadResult = googleDriveService.downloadFile(record.getFileId());
             if (!downloadResult.isSuccess()) {
                 log.error("Session {} - Failed to download file: {}", sessionId, downloadResult.getError());
                 record.addError("OCR", downloadResult.getError());

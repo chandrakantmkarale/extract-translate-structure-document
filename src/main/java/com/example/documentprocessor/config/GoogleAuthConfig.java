@@ -1,0 +1,61 @@
+package com.example.documentprocessor.config;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.auth.oauth2.GoogleCredentials;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
+import java.util.Collections;
+
+@Configuration
+@Slf4j
+public class GoogleAuthConfig {
+
+    @Value("${google.service-account.key-file:classpath:service-account-key.json}")
+    private Resource serviceAccountKeyFile;
+
+    @Value("${google.service-account.email:}")
+    private String serviceAccountEmail;
+
+    @Value("${google.application.name:Document Processor}")
+    private String applicationName;
+
+    private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+    @Bean
+    public GoogleCredentials googleCredentials() throws IOException {
+        log.info("Initializing Google Service Account credentials");
+
+        if (!serviceAccountKeyFile.exists()) {
+            log.warn("Service account key file not found: {}. Using application default credentials.",
+                serviceAccountKeyFile.getFilename());
+            return GoogleCredentials.getApplicationDefault()
+                .createScoped(Collections.singleton(DriveScopes.DRIVE));
+        }
+
+        return GoogleCredentials.fromStream(serviceAccountKeyFile.getInputStream())
+            .createScoped(Collections.singleton(DriveScopes.DRIVE));
+    }
+
+    @Bean
+    public Drive googleDriveService(GoogleCredentials credentials) {
+        log.info("Creating Google Drive service with service account authentication");
+
+        return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, request -> {
+            credentials.refreshIfExpired();
+            request.getHeaders().setAuthorization("Bearer " + credentials.getAccessToken().getTokenValue());
+        })
+        .setApplicationName(applicationName)
+        .build();
+    }
+}

@@ -3,12 +3,9 @@ package com.example.documentprocessor.service;
 import com.example.documentprocessor.model.ProcessingResult;
 import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,31 +15,20 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class GoogleDriveService {
 
-    private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private final Drive driveService;
 
-    private Drive getDriveService(String accessToken) {
-        return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpRequestInitializer() {
-            @Override
-            public void initialize(com.google.api.client.http.HttpRequest request) throws IOException {
-                request.getHeaders().setAuthorization("Bearer " + accessToken);
-            }
-        }).setApplicationName("Document Processor").build();
-    }
-
-    public ProcessingResult downloadFile(String fileId, String accessToken) {
+    public ProcessingResult downloadFile(String fileId) {
         try {
-            Drive drive = getDriveService(accessToken);
-
             // Get file metadata to retrieve mimeType
-            File file = drive.files().get(fileId).setFields("mimeType").execute();
+            File file = driveService.files().get(fileId).setFields("mimeType").execute();
             String mimeType = file.getMimeType();
 
             // Download file content
-            InputStream inputStream = drive.files().get(fileId).executeMediaAsInputStream();
+            InputStream inputStream = driveService.files().get(fileId).executeMediaAsInputStream();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
             int bytesRead;
@@ -70,17 +56,15 @@ public class GoogleDriveService {
     }
 
     public ProcessingResult uploadFile(byte[] fileData, String fileName, String parentFolderId,
-                                     String mimeType, String accessToken) {
+                                     String mimeType) {
         try {
-            Drive drive = getDriveService(accessToken);
-
             File fileMetadata = new File()
                 .setName(fileName)
                 .setParents(Arrays.asList(parentFolderId));
 
             AbstractInputStreamContent mediaContent = new ByteArrayContent(mimeType, fileData);
 
-            File uploadedFile = drive.files().create(fileMetadata, mediaContent)
+            File uploadedFile = driveService.files().create(fileMetadata, mediaContent)
                 .setFields("id")
                 .execute();
 
@@ -101,16 +85,14 @@ public class GoogleDriveService {
         }
     }
 
-    public ProcessingResult createDocument(String title, String content, String parentFolderId, String accessToken) {
+    public ProcessingResult createDocument(String title, String parentFolderId) {
         try {
-            Drive drive = getDriveService(accessToken);
-
             File fileMetadata = new File()
                 .setName(title)
                 .setMimeType("application/vnd.google-apps.document")
                 .setParents(Arrays.asList(parentFolderId));
 
-            File createdFile = drive.files().create(fileMetadata)
+            File createdFile = driveService.files().create(fileMetadata)
                 .setFields("id")
                 .execute();
 

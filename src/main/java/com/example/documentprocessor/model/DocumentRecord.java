@@ -43,7 +43,6 @@ public class DocumentRecord {
 
     // API keys
     private String selectedKey;
-    private String accessToken;
 
     // Processing results
     private String extractedText;

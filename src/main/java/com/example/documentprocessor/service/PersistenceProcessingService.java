@@ -3,6 +3,7 @@ package com.example.documentprocessor.service;
 import com.example.documentprocessor.model.DocumentRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,7 +13,8 @@ public class PersistenceProcessingService {
 
     private final GoogleDriveService googleDriveService;
 
-    private final String outputFolderId = ""; // This should be configured
+    @Value("${app.output-folder-id:}")
+    private String outputFolderId; // This should be configured
 
     public void processPersistence(DocumentRecord record, String sessionId) {
         try {
@@ -32,8 +34,7 @@ public class PersistenceProcessingService {
 
                 String documentTitle = record.getBookName() + " - " + language + " Translation";
 
-                var createResult = googleDriveService.createDocument(documentTitle, translatedText,
-                    outputFolderId, record.getAccessToken());
+                var createResult = googleDriveService.createDocument(documentTitle, outputFolderId);
 
                 if (createResult.isSuccess()) {
                     record.setPersistedFileId(createResult.getFileId());
