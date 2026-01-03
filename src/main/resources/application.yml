@@ -8,15 +8,12 @@ camel:
   springboot:
     main-run-controller: true
   rest:
-    component: servlet
+    component: direct
     binding-mode: json
-  component:
-    servlet:
-      mapping:
-        context-path: /api/*
+    enabled: true
 
 server:
-  port: 8080
+  port: 8083
 
 logging:
   level:
