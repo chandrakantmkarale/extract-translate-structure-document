@@ -8,10 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 
 @Service
 @Slf4j
@@ -194,6 +198,82 @@ public class GoogleDriveService {
                 .success(false)
                 .error("Unexpected error: " + e.getMessage())
                 .stage("Document Creation")
+                .build();
+        }
+    }
+
+    public String extractTextFromDocx(byte[] docxData) {
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxData))) {
+            StringBuilder text = new StringBuilder();
+
+            for (XWPFParagraph paragraph : document.getParagraphs()) {
+                text.append(paragraph.getText());
+                text.append("\n");
+            }
+
+            return text.toString().trim();
+
+        } catch (IOException e) {
+            log.error("Error reading DOCX file", e);
+            return "Error reading DOCX file: " + e.getMessage();
+        } catch (Exception e) {
+            log.error("Unexpected error reading DOCX file", e);
+            return "Unexpected error: " + e.getMessage();
+        }
+    }
+
+    public ProcessingResult downloadAndExtractText(String fileId) {
+        if (driveApiService == null) {
+            log.warn("Google Drive service not available - credentials not configured");
+            return ProcessingResult.builder()
+                .success(false)
+                .error("Google Drive service not available - credentials not configured")
+                .stage("Text Extraction")
+                .build();
+        }
+
+        try {
+            log.info("Downloading and extracting text from file: {}", fileId);
+
+            // Download the file
+            ProcessingResult downloadResult = downloadFile(fileId);
+            if (!downloadResult.isSuccess()) {
+                return downloadResult;
+            }
+
+            // Check if it's a DOCX file
+            String mimeType = downloadResult.getMimeType();
+            if (!"application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(mimeType)) {
+                log.error("File {} is not a DOCX file, MIME type: {}", fileId, mimeType);
+                return ProcessingResult.builder()
+                    .success(false)
+                    .error("File is not a DOCX document")
+                    .stage("Text Extraction")
+                    .fileId(fileId)
+                    .mimeType(mimeType)
+                    .build();
+            }
+
+            // Extract text
+            String extractedText = extractTextFromDocx(downloadResult.getFileData());
+
+            log.info("Successfully extracted text from file: {} (length: {} chars)", fileId, extractedText.length());
+
+            return ProcessingResult.builder()
+                .success(true)
+                .extractedText(extractedText)
+                .fileId(fileId)
+                .fileName(downloadResult.getFileName())
+                .mimeType(mimeType)
+                .build();
+
+        } catch (Exception e) {
+            log.error("Unexpected error downloading and extracting text from file: {}", fileId, e);
+            return ProcessingResult.builder()
+                .success(false)
+                .error("Unexpected error: " + e.getMessage())
+                .stage("Text Extraction")
+                .fileId(fileId)
                 .build();
         }
     }

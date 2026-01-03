@@ -64,7 +64,7 @@ app:
       structure: KqNDsYaw5RqXHjiJ
 
   files:
-    prompt-ocr-filename: PROMPT_2_EXTRACT_TEXT_FROM_PDF_HINDI.DOCX
+    extract-text-from-pdf-id: 1su_3XEbE8TblLZZxdm3J5cei2bO-nP10Zxk85KX9KPg
     prompt-prefix-translate: PROMPT_2_TRANSLATE_TEXT_FROM_HINDI_2_
     prompt-prefix-structure: PROMPT_2_STRUCTURE_TRANSLATED_TEXT_
     translation-corrections-prefix: human_reviewed_translation_corrections_

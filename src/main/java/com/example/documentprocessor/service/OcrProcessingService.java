@@ -2,12 +2,10 @@ package com.example.documentprocessor.service;
 
 import com.example.documentprocessor.model.DocumentRecord;
 import com.example.documentprocessor.processor.GeminiProcessor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 @Service
@@ -17,7 +15,8 @@ public class OcrProcessingService {
     private final Optional<GoogleDriveService> googleDriveService;
     private final GeminiProcessor geminiProcessor;
 
-    private final String ocrPromptFilePath = "./test_data/input/prompt_ocr.txt";
+    @Value("${files.extract-text-from-pdf-id:}")
+    private String extractTextFromPdfPromptFileId;
 
     public OcrProcessingService(Optional<GoogleDriveService> googleDriveService, GeminiProcessor geminiProcessor) {
         this.googleDriveService = googleDriveService;
@@ -44,8 +43,16 @@ public class OcrProcessingService {
                 return;
             }
 
-            // Read OCR prompt
-            String prompt = Files.readString(Paths.get(ocrPromptFilePath));
+            // Download and read OCR prompt from Google Drive
+            var promptDownloadResult = googleDriveService.get().downloadAndExtractText(extractTextFromPdfPromptFileId);
+            if (!promptDownloadResult.isSuccess()) {
+                log.error("Session {} - Failed to download and extract prompt text: {}", sessionId, promptDownloadResult.getError());
+                record.addError("OCR", promptDownloadResult.getError());
+                record.setAllStagesSuccess(false);
+                return;
+            }
+
+            String prompt = promptDownloadResult.getExtractedText();
 
             // Perform OCR using Gemini
             var ocrResult = geminiProcessor.performOcr(record, downloadResult.getFileData(),
