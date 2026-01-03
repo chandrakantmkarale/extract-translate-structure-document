@@ -19,6 +19,7 @@ public class ProcessingResult {
     private String error;
     private String stage;
     private String fileId;
+    private String fileName;
     private String bookName;
 
     // OCR results
