@@ -29,16 +29,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Apache Camel
-    implementation("org.apache.camel.springboot:camel-spring-boot-starter:3.21.0")
-    implementation("org.apache.camel:camel-rest:3.21.0")
-    implementation("org.apache.camel:camel-servlet:3.21.0")
-    implementation("org.apache.camel:camel-http:3.21.0")
-    implementation("org.apache.camel:camel-file:3.21.0")
-    implementation("org.apache.camel:camel-csv:3.21.0")
-    implementation("org.apache.camel:camel-jackson:3.21.0")
-    implementation("org.apache.camel:camel-log:3.21.0")
-
     // Jackson for JSON/CSV processing
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
@@ -62,7 +52,6 @@ dependencies {
 
     // Test Dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.apache.camel:camel-test-spring-junit5:3.21.0")
 }
 
 tasks.withType<Test> {

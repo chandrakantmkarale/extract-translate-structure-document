@@ -22,14 +22,9 @@ public class GeminiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.gemini.api.upload-url}")
-    private String uploadUrl;
-
-    @Value("${app.gemini.api.generate-url}")
-    private String generateUrl;
-
-    @Value("${app.gemini.api.cleanup-url}")
-    private String cleanupUrl;
+    private final String uploadUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files";
+    private final String generateUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private final String cleanupUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files";
 
     public ProcessingResult uploadFile(byte[] fileData, String mimeType, String apiKey) {
         try {
@@ -153,6 +148,90 @@ public class GeminiService {
                 .success(false)
                 .error(e.getMessage())
                 .stage("File Cleanup")
+                .build();
+        }
+    }
+
+    public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt, String apiKey) {
+        try {
+            // Upload file
+            ProcessingResult uploadResult = uploadFile(fileData, mimeType, apiKey);
+            if (!uploadResult.isSuccess()) {
+                return uploadResult;
+            }
+
+            String fileUri = "files/" + uploadResult.getFileId();
+
+            // Generate content
+            ProcessingResult generateResult = generateContent(prompt, fileUri, apiKey);
+            if (!generateResult.isSuccess()) {
+                return generateResult;
+            }
+
+            // Cleanup
+            cleanupFile(uploadResult.getFileId(), apiKey);
+
+            return ProcessingResult.builder()
+                .success(true)
+                .extractedText(generateResult.getExtractedText())
+                .stage("OCR")
+                .build();
+
+        } catch (Exception e) {
+            log.error("Error performing OCR", e);
+            return ProcessingResult.builder()
+                .success(false)
+                .error(e.getMessage())
+                .stage("OCR")
+                .build();
+        }
+    }
+
+    public ProcessingResult performTranslation(String sourceText, String targetLanguage, String prompt, String apiKey) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(apiKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> requestBody = Map.of(
+                "contents", new Object[]{
+                    Map.of("parts", new Object[]{
+                        Map.of("text", prompt.replace("{sourceText}", sourceText).replace("{targetLanguage}", targetLanguage))
+                    })
+                }
+            );
+
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            log.info("Calling Gemini generate API for translation: {} with prompt length: {}", generateUrl, prompt.length());
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                generateUrl, HttpMethod.POST, requestEntity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                JsonNode responseJson = objectMapper.readTree(response.getBody());
+                String text = responseJson.path("candidates")
+                    .get(0).path("content").path("parts").get(0).path("text").asText();
+
+                return ProcessingResult.builder()
+                    .success(true)
+                    .extractedText(text)
+                    .targetLanguage(targetLanguage)
+                    .stage("Translation")
+                    .build();
+            } else {
+                return ProcessingResult.builder()
+                    .success(false)
+                    .error("Translation failed: " + response.getStatusCode())
+                    .stage("Translation")
+                    .build();
+            }
+        } catch (Exception e) {
+            log.error("Error performing translation", e);
+            return ProcessingResult.builder()
+                .success(false)
+                .error(e.getMessage())
+                .stage("Translation")
                 .build();
         }
     }

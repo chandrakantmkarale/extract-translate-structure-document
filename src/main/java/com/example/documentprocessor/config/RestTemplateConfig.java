@@ -12,9 +12,4 @@ public class RestTemplateConfig {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
-
-    @Bean
-    public CsvMapper csvMapper() {
-        return new CsvMapper();
-    }
 }

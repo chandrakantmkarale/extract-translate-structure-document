@@ -20,11 +20,8 @@ public class GoogleDriveService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.google.drive.api.base-url:https://www.googleapis.com/drive/v3}")
-    private String driveApiBaseUrl;
-
-    @Value("${app.google.docs.api.base-url:https://docs.googleapis.com/v1}")
-    private String docsApiBaseUrl;
+    private final String driveApiBaseUrl = "https://www.googleapis.com/drive/v3";
+    private final String docsApiBaseUrl = "https://docs.googleapis.com/v1";
 
     public ProcessingResult downloadFile(String fileId, String accessToken) {
         try {

@@ -1,4 +1,4 @@
-package com.example.documentprocessor.processor;
+package com.example.documentprocessor.service;
 
 import com.example.documentprocessor.model.DocumentRecord;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -6,21 +6,20 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class CsvProcessor {
+public class CsvProcessingService {
 
     private final CsvMapper csvMapper;
 
@@ -65,6 +64,23 @@ public class CsvProcessor {
         return records;
     }
 
+    public void validateCsv(List<DocumentRecord> records) throws Exception {
+        if (records == null || records.isEmpty()) {
+            throw new Exception("CSV file is empty or could not be read");
+        }
+
+        // Validate required columns
+        DocumentRecord firstRecord = records.get(0);
+        if (firstRecord.getFileId() == null || firstRecord.getFileId().trim().isEmpty()) {
+            throw new Exception("Required column missing or empty: fileId");
+        }
+        if (firstRecord.getTargetLangs() == null || firstRecord.getTargetLangs().trim().isEmpty()) {
+            throw new Exception("Required column missing or empty: targetLangs");
+        }
+
+        log.info("CSV validation successful. Records: {}", records.size());
+    }
+
     public void writeCsv(List<DocumentRecord> records, String filePath) throws IOException {
         if (records == null || records.isEmpty()) {
             log.warn("No records to write to CSV");
@@ -95,23 +111,6 @@ public class CsvProcessor {
         }
 
         log.info("Wrote {} records to CSV file: {}", records.size(), filePath);
-    }
-
-    public void validateCsv(List<DocumentRecord> records) throws Exception {
-        if (records == null || records.isEmpty()) {
-            throw new Exception("CSV file is empty or could not be read");
-        }
-
-        // Validate required columns
-        DocumentRecord firstRecord = records.get(0);
-        if (firstRecord.getFileId() == null || firstRecord.getFileId().trim().isEmpty()) {
-            throw new Exception("Required column missing or empty: fileId");
-        }
-        if (firstRecord.getTargetLangs() == null || firstRecord.getTargetLangs().trim().isEmpty()) {
-            throw new Exception("Required column missing or empty: targetLangs");
-        }
-
-        log.info("CSV validation successful. Records: {}", records.size());
     }
 
     private String escapeCsvField(String field) {

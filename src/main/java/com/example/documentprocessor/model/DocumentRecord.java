@@ -33,6 +33,8 @@ public class DocumentRecord {
     private LocalDateTime processingEndTime;
     private String executionId;
     private String workflowName;
+    private String sessionId;
+    private String csvPath;
 
     // Processing state
     private String currentStage;

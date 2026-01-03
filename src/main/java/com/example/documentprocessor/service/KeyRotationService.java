@@ -25,14 +25,9 @@ public class KeyRotationService {
 
     private final CsvMapper csvMapper;
 
-    @Value("${app.local-testing:true}")
-    private boolean localTesting;
-
-    @Value("${app.local.keys-csv-path:./test_data/gemini_keys.csv}")
-    private String localKeysCsvPath;
-
-    @Value("${app.google.drive.keys-csv-file-id:}")
-    private String keysCsvFileId;
+    private final boolean localTesting = true;
+    private final String localKeysCsvPath = "./test_data/gemini_keys.csv";
+    private final String keysCsvFileId = "";
 
     // In-memory key rotation state
     private final List<String> availableKeys = new ArrayList<>();

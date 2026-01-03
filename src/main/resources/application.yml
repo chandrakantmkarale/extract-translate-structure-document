@@ -4,21 +4,12 @@ spring:
   profiles:
     active: dev
 
-camel:
-  springboot:
-    main-run-controller: true
-  rest:
-    component: direct
-    binding-mode: json
-    enabled: true
-
 server:
   port: 8083
 
 logging:
   level:
     com.example.documentprocessor: INFO
-    org.apache.camel: WARN
     org.springframework: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
