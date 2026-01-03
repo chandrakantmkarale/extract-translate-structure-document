@@ -2,6 +2,7 @@ package com.example.documentprocessor.controller;
 
 import com.example.documentprocessor.model.DocumentRecord;
 import com.example.documentprocessor.service.DocumentProcessingService;
+import com.example.documentprocessor.service.GeminiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.List;
 public class DocumentProcessingController {
 
     private final DocumentProcessingService documentProcessingService;
+    private final GeminiService geminiService;
 
     public static class ProcessRequest {
         private String fileId;
@@ -40,6 +42,18 @@ public class DocumentProcessingController {
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             log.error("Error processing documents", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/models")
+    public ResponseEntity<String> listModels() {
+        log.info("Listing available Gemini models");
+        try {
+            geminiService.listAvailableModels();
+            return ResponseEntity.ok("Models listed in logs");
+        } catch (Exception e) {
+            log.error("Error listing models", e);
             return ResponseEntity.internalServerError().build();
         }
     }

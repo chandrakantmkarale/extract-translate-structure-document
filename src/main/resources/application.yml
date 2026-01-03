@@ -35,5 +35,5 @@ app:
 # Gemini AI Configuration
 gemini:
   api:
-    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-    model: "gemini-1.5-flash"
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    model: "gemini-2.0-flash"

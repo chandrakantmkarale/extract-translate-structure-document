@@ -47,7 +47,7 @@ app:
     api-key: ${GEMINI_API_KEY:AIzaSyBubtE7PifvmnwEQWrjFfltcq0t1DGakB8}
     api:
       upload-url: https://generativelanguage.googleapis.com/upload/v1beta/files
-      generate-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+      generate-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
       cleanup-url: https://generativelanguage.googleapis.com/v1beta/files
 
 

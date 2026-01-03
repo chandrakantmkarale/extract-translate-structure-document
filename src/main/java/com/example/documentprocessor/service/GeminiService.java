@@ -146,4 +146,20 @@ public class GeminiService {
                 .build();
         }
     }
+
+    public void listAvailableModels() {
+        try {
+            String listModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiApiKey;
+
+            ResponseEntity<String> response = restTemplate.getForEntity(listModelsUrl, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Available Gemini models: {}", response.getBody());
+            } else {
+                log.error("Failed to list models: {}", response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("Error listing models", e);
+        }
+    }
 }
