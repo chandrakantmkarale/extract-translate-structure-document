@@ -48,31 +48,40 @@ public class GoogleDriveService {
 
             log.info("File metadata - Name: {}, MIME Type: {}, Size: {} bytes", fileName, mimeType, fileSize);
 
-            // Download file content
-            try (InputStream inputStream = driveApiService.files().get(fileId).executeMediaAsInputStream();
-                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            byte[] fileData;
 
-                byte[] buffer = new byte[8192]; // 8KB buffer
-                int bytesRead;
-                long totalBytesRead = 0;
+            // Check if this is a Google Docs file that needs to be exported
+            if (isGoogleDocsFile(mimeType)) {
+                log.info("File is a Google Docs file, exporting to DOCX format");
+                fileData = exportGoogleDocsFile(fileId, mimeType);
+                // Update mimeType to reflect the exported format
+                mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            } else {
+                // Download binary file content
+                try (InputStream inputStream = driveApiService.files().get(fileId).executeMediaAsInputStream();
+                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                    totalBytesRead += bytesRead;
+                    byte[] buffer = new byte[8192]; // 8KB buffer
+                    int bytesRead;
+                    long totalBytesRead = 0;
+
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                        totalBytesRead += bytesRead;
+                    }
+
+                    fileData = outputStream.toByteArray();
+                    log.info("Successfully downloaded binary file: {} ({} bytes)", fileName, totalBytesRead);
                 }
-
-                byte[] fileData = outputStream.toByteArray();
-
-                log.info("Successfully downloaded file: {} ({} bytes)", fileName, totalBytesRead);
-
-                return ProcessingResult.builder()
-                    .success(true)
-                    .fileData(fileData)
-                    .mimeType(mimeType)
-                    .fileId(fileId)
-                    .fileName(fileName)
-                    .build();
             }
+
+            return ProcessingResult.builder()
+                .success(true)
+                .fileData(fileData)
+                .mimeType(mimeType)
+                .fileId(fileId)
+                .fileName(fileName)
+                .build();
 
         } catch (IOException e) {
             log.error("Error downloading file from Google Drive: {}", fileId, e);
@@ -90,6 +99,57 @@ public class GoogleDriveService {
                 .stage("File Download")
                 .fileId(fileId)
                 .build();
+        }
+    }
+
+    /**
+     * Check if the file is a Google Docs editor file that needs to be exported
+     */
+    private boolean isGoogleDocsFile(String mimeType) {
+        return "application/vnd.google-apps.document".equals(mimeType) ||
+               "application/vnd.google-apps.spreadsheet".equals(mimeType) ||
+               "application/vnd.google-apps.presentation".equals(mimeType);
+    }
+
+    /**
+     * Export a Google Docs file to the appropriate format
+     */
+    private byte[] exportGoogleDocsFile(String fileId, String mimeType) throws IOException {
+        String exportMimeType;
+
+        // Determine the export format based on the Google Docs file type
+        switch (mimeType) {
+            case "application/vnd.google-apps.document":
+                exportMimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"; // DOCX
+                break;
+            case "application/vnd.google-apps.spreadsheet":
+                exportMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; // XLSX
+                break;
+            case "application/vnd.google-apps.presentation":
+                exportMimeType = "application/vnd.openxmlformats-officedocument.presentationml.presentation"; // PPTX
+                break;
+            default:
+                throw new IOException("Unsupported Google Docs file type: " + mimeType);
+        }
+
+        log.info("Exporting Google Docs file {} to format: {}", fileId, exportMimeType);
+
+        try (InputStream inputStream = driveApiService.files().export(fileId, exportMimeType).executeMediaAsInputStream();
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[8192]; // 8KB buffer
+            int bytesRead;
+            long totalBytesRead = 0;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+
+            byte[] fileData = outputStream.toByteArray();
+            log.info("Successfully exported Google Docs file: {} ({} bytes)", fileId, totalBytesRead);
+
+            return fileData;
         }
     }
 

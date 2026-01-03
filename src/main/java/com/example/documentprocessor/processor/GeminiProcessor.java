@@ -20,7 +20,7 @@ public class GeminiProcessor {
     public ProcessingResult performOcr(DocumentRecord record, byte[] fileData, String mimeType, String prompt) {
         log.info("Processing OCR operation for record: {}", record.getFileId());
 
-        return geminiService.performOcr(fileData, mimeType, prompt, record.getSelectedKey());
+        return geminiService.performOcr(fileData, mimeType, prompt);
     }
 
     public ProcessingResult performTranslation(DocumentRecord record, String sourceText, String targetLanguage, String prompt) {

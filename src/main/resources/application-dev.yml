@@ -44,24 +44,12 @@ app:
 
   gemini:
 
-    api-key: ${GEMINI_API_KEY:dev-gemini-key}
+    api-key: ${GEMINI_API_KEY:AIzaSyBubtE7PifvmnwEQWrjFfltcq0t1DGakB8}
     api:
       upload-url: https://generativelanguage.googleapis.com/upload/v1beta/files
       generate-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
       cleanup-url: https://generativelanguage.googleapis.com/v1beta/files
 
-  workflow:
-    ids:
-      gemini-vision: jpasv44KNhwS4QMl
-      translate: o9AJdzVkeq7t9Mnr
-      persistence: 5uRcYsYc2M2QkNFZ
-      key-rotation: kE6dflX1zdZf4uLC
-      fetch-doc: Z4ZShypJB0soKdFy
-      export-doc: Mq5EwlTainkloqhu
-      error-log: 4SuT1Z7km0u9TdK6
-      rate-limit: waqc8vvFktQ99GjG
-      logger: 1ys2jOntHRJEJvbA
-      structure: KqNDsYaw5RqXHjiJ
 
   files:
     extract-text-from-pdf-id: 1su_3XEbE8TblLZZxdm3J5cei2bO-nP10Zxk85KX9KPg

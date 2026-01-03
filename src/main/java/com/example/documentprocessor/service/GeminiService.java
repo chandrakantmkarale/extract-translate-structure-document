@@ -27,10 +27,13 @@ public class GeminiService {
     @Value("${gemini.api.model}")
     private String modelName;
 
-    public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt, String apiKey) {
+    @Value("${app.gemini.api-key}")
+    private String geminiApiKey;
+
+    public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(apiKey);
+            headers.setBearerAuth(geminiApiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // Encode file data as base64
