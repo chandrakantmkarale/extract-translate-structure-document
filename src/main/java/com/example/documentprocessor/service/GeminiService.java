@@ -33,7 +33,6 @@ public class GeminiService {
     public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(geminiApiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // Encode file data as base64
@@ -61,8 +60,10 @@ public class GeminiService {
             log.info("Calling unified Gemini API for OCR with model: {}, mimeType: {}, file size: {} bytes",
                 modelName, mimeType, fileData.length);
 
+            String urlWithKey = generateUrl + "?key=" + geminiApiKey;
+
             ResponseEntity<String> response = restTemplate.exchange(
-                generateUrl, HttpMethod.POST, requestEntity, String.class);
+                urlWithKey, HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseJson = objectMapper.readTree(response.getBody());
@@ -94,7 +95,6 @@ public class GeminiService {
     public ProcessingResult performTranslation(String sourceText, String targetLanguage, String prompt, String apiKey) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // Prepare the prompt with source text and target language
@@ -114,8 +114,10 @@ public class GeminiService {
             log.info("Calling unified Gemini API for translation with model: {}, target language: {}",
                 modelName, targetLanguage);
 
+            String urlWithKey = generateUrl + "?key=" + apiKey;
+
             ResponseEntity<String> response = restTemplate.exchange(
-                generateUrl, HttpMethod.POST, requestEntity, String.class);
+                urlWithKey, HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseJson = objectMapper.readTree(response.getBody());
