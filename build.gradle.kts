@@ -34,7 +34,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
 
-    // Google Cloud Vertex AI SDK (Latest)
+    // Google Cloud Vertex AI SDK (Latest - supports unified API)
     implementation("com.google.cloud:google-cloud-aiplatform:3.40.0")
 
     // Google Cloud Auth Library

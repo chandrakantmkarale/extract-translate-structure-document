@@ -31,3 +31,9 @@ app:
   log-local-dir: ./logs
   output-folder-id: ""  # Google Drive folder ID for storing processed documents
   keys-csv-file-id: ""  # Google Drive file ID for Gemini API keys CSV
+
+# Gemini AI Configuration
+gemini:
+  api:
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+    model: "gemini-1.5-flash"

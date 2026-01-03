@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Base64;
 import java.util.Map;
 
 @Service
@@ -21,163 +21,65 @@ public class GeminiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    private final String uploadUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files";
-    private final String generateUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-    private final String cleanupUrl = "https://generativelanguage.googleapis.com/upload/v1beta/files";
+    @Value("${gemini.api.url}")
+    private String generateUrl;
 
-    public ProcessingResult uploadFile(byte[] fileData, String mimeType, String apiKey) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(apiKey);
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+    @Value("${gemini.api.model}")
+    private String modelName;
 
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new org.springframework.core.io.ByteArrayResource(fileData) {
-                @Override
-                public String getFilename() {
-                    return "document." + getExtensionFromMimeType(mimeType);
-                }
-            });
-
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-
-            log.info("Calling Gemini upload API: {} with mimeType: {}, file size: {} bytes", uploadUrl, mimeType, fileData.length);
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                uploadUrl, HttpMethod.POST, requestEntity, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                JsonNode responseJson = objectMapper.readTree(response.getBody());
-                String fileUri = responseJson.path("file").path("uri").asText();
-                String fileName = responseJson.path("file").path("name").asText();
-
-                return ProcessingResult.builder()
-                    .success(true)
-                    .fileId(fileName)
-                    .build();
-            } else {
-                return ProcessingResult.builder()
-                    .success(false)
-                    .error("Upload failed: " + response.getStatusCode())
-                    .stage("File Upload")
-                    .build();
-            }
-        } catch (Exception e) {
-            log.error("Error uploading file to Gemini", e);
-            return ProcessingResult.builder()
-                .success(false)
-                .error(e.getMessage())
-                .stage("File Upload")
-                .build();
-        }
-    }
-
-    public ProcessingResult generateContent(String prompt, String fileUri, String apiKey) {
+    public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt, String apiKey) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            Map<String, Object> fileData = Map.of(
-                "mime_type", getMimeTypeFromUri(fileUri),
-                "file_uri", fileUri
+            // Encode file data as base64
+            String base64Data = Base64.getEncoder().encodeToString(fileData);
+
+            // Create the request body for multimodal content
+            Map<String, Object> filePart = Map.of(
+                "inline_data", Map.of(
+                    "mime_type", mimeType,
+                    "data", base64Data
+                )
             );
 
             Map<String, Object> requestBody = Map.of(
                 "contents", new Object[]{
                     Map.of("parts", new Object[]{
                         Map.of("text", prompt),
-                        Map.of("file_data", fileData)
+                        filePart
                     })
                 }
             );
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            log.info("Calling Gemini generate API: {} with prompt length: {}, fileUri: {}", generateUrl, prompt.length(), fileUri);
+            log.info("Calling unified Gemini API for OCR with model: {}, mimeType: {}, file size: {} bytes",
+                modelName, mimeType, fileData.length);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 generateUrl, HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseJson = objectMapper.readTree(response.getBody());
-                String text = responseJson.path("candidates")
+                String extractedText = responseJson.path("candidates")
                     .get(0).path("content").path("parts").get(0).path("text").asText();
 
                 return ProcessingResult.builder()
                     .success(true)
-                    .extractedText(text)
+                    .extractedText(extractedText)
+                    .stage("OCR")
                     .build();
             } else {
                 return ProcessingResult.builder()
                     .success(false)
-                    .error("Generation failed: " + response.getStatusCode())
-                    .stage("Content Generation")
+                    .error("OCR failed: " + response.getStatusCode())
+                    .stage("OCR")
                     .build();
             }
         } catch (Exception e) {
-            log.error("Error generating content with Gemini", e);
-            return ProcessingResult.builder()
-                .success(false)
-                .error(e.getMessage())
-                .stage("Content Generation")
-                .build();
-        }
-    }
-
-    public ProcessingResult cleanupFile(String fileName, String apiKey) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(apiKey);
-
-            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-
-            String fullUrl = cleanupUrl + "/" + fileName;
-            log.info("Calling Gemini cleanup API: {} for file: {}", fullUrl, fileName);
-
-            ResponseEntity<Void> response = restTemplate.exchange(
-                fullUrl, HttpMethod.DELETE, requestEntity, Void.class);
-
-            return ProcessingResult.builder()
-                .success(response.getStatusCode().is2xxSuccessful())
-                .build();
-        } catch (Exception e) {
-            log.warn("Error cleaning up Gemini file: {}", e.getMessage());
-            return ProcessingResult.builder()
-                .success(false)
-                .error(e.getMessage())
-                .stage("File Cleanup")
-                .build();
-        }
-    }
-
-    public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt, String apiKey) {
-        try {
-            // Upload file
-            ProcessingResult uploadResult = uploadFile(fileData, mimeType, apiKey);
-            if (!uploadResult.isSuccess()) {
-                return uploadResult;
-            }
-
-            String fileUri = "files/" + uploadResult.getFileId();
-
-            // Generate content
-            ProcessingResult generateResult = generateContent(prompt, fileUri, apiKey);
-            if (!generateResult.isSuccess()) {
-                return generateResult;
-            }
-
-            // Cleanup
-            cleanupFile(uploadResult.getFileId(), apiKey);
-
-            return ProcessingResult.builder()
-                .success(true)
-                .extractedText(generateResult.getExtractedText())
-                .stage("OCR")
-                .build();
-
-        } catch (Exception e) {
-            log.error("Error performing OCR", e);
+            log.error("Error performing OCR with unified Gemini API", e);
             return ProcessingResult.builder()
                 .success(false)
                 .error(e.getMessage())
@@ -192,29 +94,34 @@ public class GeminiService {
             headers.setBearerAuth(apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            // Prepare the prompt with source text and target language
+            String fullPrompt = prompt.replace("{sourceText}", sourceText)
+                .replace("{targetLanguage}", targetLanguage);
+
             Map<String, Object> requestBody = Map.of(
                 "contents", new Object[]{
                     Map.of("parts", new Object[]{
-                        Map.of("text", prompt.replace("{sourceText}", sourceText).replace("{targetLanguage}", targetLanguage))
+                        Map.of("text", fullPrompt)
                     })
                 }
             );
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            log.info("Calling Gemini generate API for translation: {} with prompt length: {}", generateUrl, prompt.length());
+            log.info("Calling unified Gemini API for translation with model: {}, target language: {}",
+                modelName, targetLanguage);
 
             ResponseEntity<String> response = restTemplate.exchange(
                 generateUrl, HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseJson = objectMapper.readTree(response.getBody());
-                String text = responseJson.path("candidates")
+                String translatedText = responseJson.path("candidates")
                     .get(0).path("content").path("parts").get(0).path("text").asText();
 
                 return ProcessingResult.builder()
                     .success(true)
-                    .extractedText(text)
+                    .extractedText(translatedText)
                     .targetLanguage(targetLanguage)
                     .stage("Translation")
                     .build();
@@ -226,26 +133,12 @@ public class GeminiService {
                     .build();
             }
         } catch (Exception e) {
-            log.error("Error performing translation", e);
+            log.error("Error performing translation with unified Gemini API", e);
             return ProcessingResult.builder()
                 .success(false)
                 .error(e.getMessage())
                 .stage("Translation")
                 .build();
         }
-    }
-
-    private String getExtensionFromMimeType(String mimeType) {
-        switch (mimeType) {
-            case "application/pdf": return "pdf";
-            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": return "docx";
-            default: return "bin";
-        }
-    }
-
-    private String getMimeTypeFromUri(String uri) {
-        if (uri.contains(".pdf")) return "application/pdf";
-        if (uri.contains(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        return "application/octet-stream";
     }
 }
