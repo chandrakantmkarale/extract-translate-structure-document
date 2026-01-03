@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -17,11 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class CsvProcessingService {
 
+    private static final Logger log = LoggerFactory.getLogger(CsvProcessingService.class);
     private final CsvMapper csvMapper = new CsvMapper();
+
+    public CsvProcessingService() {
+        // Default constructor
+    }
 
     public List<DocumentRecord> readCsv(String filePath) throws IOException {
         File csvFile = new File(filePath);

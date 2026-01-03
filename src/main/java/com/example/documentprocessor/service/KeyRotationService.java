@@ -14,20 +14,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class KeyRotationService {
 
     private final CsvMapper csvMapper;
-    private final GoogleDriveService googleDriveService;
+    private final Optional<GoogleDriveService> googleDriveService;
 
     @Value("${app.local-testing:true}")
     private boolean localTesting;
+
+    public KeyRotationService(CsvMapper csvMapper, Optional<GoogleDriveService> googleDriveService) {
+        this.csvMapper = csvMapper;
+        this.googleDriveService = googleDriveService;
+    }
 
     @Value("${app.local-keys-csv-path:./test_data/gemini_keys.csv}")
     private String localKeysCsvPath;
@@ -109,9 +115,14 @@ public class KeyRotationService {
     }
 
     private void loadKeysFromGoogleDrive() {
+        if (googleDriveService.isEmpty()) {
+            log.warn("Google Drive service not available - skipping key loading from Google Drive");
+            return;
+        }
+
         try {
             // Use service account to download the keys CSV from Google Drive
-            var downloadResult = googleDriveService.downloadFile(keysCsvFileId);
+            var downloadResult = googleDriveService.get().downloadFile(keysCsvFileId);
             if (!downloadResult.isSuccess()) {
                 log.error("Failed to download keys CSV from Google Drive: {}", downloadResult.getError());
                 return;

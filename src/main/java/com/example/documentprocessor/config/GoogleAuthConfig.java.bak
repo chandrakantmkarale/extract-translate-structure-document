@@ -10,14 +10,15 @@ import com.google.auth.oauth2.GoogleCredentials;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.util.Collections;
 
-@Configuration
-@Slf4j
+// @Configuration
+// @Slf4j
 public class GoogleAuthConfig {
 
     @Value("${google.service-account.key-file:classpath:service-account-key.json}")
@@ -33,29 +34,28 @@ public class GoogleAuthConfig {
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     @Bean
+    @ConditionalOnProperty(name = "google.enabled", havingValue = "true")
     public GoogleCredentials googleCredentials() throws IOException {
         log.info("Initializing Google Service Account credentials");
 
         if (!serviceAccountKeyFile.exists()) {
-            log.warn("Service account key file not found: {}. Using application default credentials.",
-                serviceAccountKeyFile.getFilename());
-            return GoogleCredentials.getApplicationDefault()
-                .createScoped(Collections.singleton(DriveScopes.DRIVE));
+            throw new IOException("Service account key file not found: " + serviceAccountKeyFile.getFilename());
         }
 
         return GoogleCredentials.fromStream(serviceAccountKeyFile.getInputStream())
             .createScoped(Collections.singleton(DriveScopes.DRIVE));
     }
 
-    @Bean
-    public Drive googleDriveService(GoogleCredentials credentials) {
-        log.info("Creating Google Drive service with service account authentication");
-
-        return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, request -> {
-            credentials.refreshIfExpired();
-            request.getHeaders().setAuthorization("Bearer " + credentials.getAccessToken().getTokenValue());
-        })
-        .setApplicationName(applicationName)
-        .build();
-    }
+    // @Bean
+    // @ConditionalOnProperty(name = "google.enabled", havingValue = "true")
+    // public Drive driveService(GoogleCredentials credentials) {
+    //     log.info("Creating Google Drive service with service account authentication");
+    //
+    //     return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, request -> {
+    //         credentials.refreshIfExpired();
+    //         request.getHeaders().setAuthorization("Bearer " + credentials.getAccessToken().getTokenValue());
+    //     })
+    //     .setApplicationName(applicationName)
+    //     .build();
+    // }
 }

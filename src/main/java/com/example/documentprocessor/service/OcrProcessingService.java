@@ -8,23 +8,35 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OcrProcessingService {
 
-    private final GoogleDriveService googleDriveService;
+    private final Optional<GoogleDriveService> googleDriveService;
     private final GeminiProcessor geminiProcessor;
 
     private final String ocrPromptFilePath = "./test_data/input/prompt_ocr.txt";
 
+    public OcrProcessingService(Optional<GoogleDriveService> googleDriveService, GeminiProcessor geminiProcessor) {
+        this.googleDriveService = googleDriveService;
+        this.geminiProcessor = geminiProcessor;
+    }
+
     public void processOcr(DocumentRecord record, String sessionId) {
+        if (googleDriveService.isEmpty()) {
+            log.error("Session {} - Google Drive service not available", sessionId);
+            record.addError("OCR", "Google Drive service not available");
+            record.setAllStagesSuccess(false);
+            return;
+        }
+
         try {
             log.info("Session {} - Starting OCR processing for file: {}", sessionId, record.getFileId());
 
             // Download the file from Google Drive
-            var downloadResult = googleDriveService.downloadFile(record.getFileId());
+            var downloadResult = googleDriveService.get().downloadFile(record.getFileId());
             if (!downloadResult.isSuccess()) {
                 log.error("Session {} - Failed to download file: {}", sessionId, downloadResult.getError());
                 record.addError("OCR", downloadResult.getError());

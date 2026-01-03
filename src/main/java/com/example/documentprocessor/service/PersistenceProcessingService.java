@@ -1,22 +1,32 @@
 package com.example.documentprocessor.service;
 
 import com.example.documentprocessor.model.DocumentRecord;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class PersistenceProcessingService {
 
-    private final GoogleDriveService googleDriveService;
+    private final Optional<GoogleDriveService> googleDriveService;
 
     @Value("${app.output-folder-id:}")
     private String outputFolderId; // This should be configured
 
+    public PersistenceProcessingService(Optional<GoogleDriveService> googleDriveService) {
+        this.googleDriveService = googleDriveService;
+    }
+
     public void processPersistence(DocumentRecord record, String sessionId) {
+        if (googleDriveService.isEmpty()) {
+            log.error("Session {} - Google Drive service not available", sessionId);
+            record.addError("Persistence", "Google Drive service not available");
+            record.setAllStagesSuccess(false);
+            return;
+        }
+
         try {
             log.info("Session {} - Starting persistence processing for file: {}", sessionId, record.getFileId());
 
@@ -34,7 +44,7 @@ public class PersistenceProcessingService {
 
                 String documentTitle = record.getBookName() + " - " + language + " Translation";
 
-                var createResult = googleDriveService.createDocument(documentTitle, outputFolderId);
+                var createResult = googleDriveService.get().createDocument(documentTitle, outputFolderId);
 
                 if (createResult.isSuccess()) {
                     record.setPersistedFileId(createResult.getFileId());
