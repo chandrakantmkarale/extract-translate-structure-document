@@ -15,7 +15,7 @@ public class OcrProcessingService {
     private final Optional<GoogleDriveService> googleDriveService;
     private final GeminiProcessor geminiProcessor;
 
-    @Value("${files.extract-text-from-pdf-id:}")
+    @Value("${app.files.extract-text-from-pdf-id:}")
     private String extractTextFromPdfPromptFileId;
 
     public OcrProcessingService(Optional<GoogleDriveService> googleDriveService, GeminiProcessor geminiProcessor) {
