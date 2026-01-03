@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,6 +30,10 @@ public class OrchestratorRoute extends RouteBuilder {
     @Override
     public void configure() throws Exception {
         log.info("Configuring OrchestratorRoute - setting up REST endpoints");
+
+        restConfiguration()
+            .component("servlet")
+            .bindingMode(RestBindingMode.json);
 
         // Main orchestrator route - REST endpoint to start processing
         rest("/process")

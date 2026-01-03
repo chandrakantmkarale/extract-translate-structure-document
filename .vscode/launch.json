@@ -19,6 +19,13 @@
                 "GMAIL_API_KEY": "dev-email-key",
                 "GEMINI_API_KEY": "dev-gemini-key"
             }
+        },
+        {
+            "type": "java",
+            "name": "Attach to Document Processor (Debug)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005
         }
     ]
 }
