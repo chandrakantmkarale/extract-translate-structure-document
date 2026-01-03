@@ -1,56 +1,64 @@
 package com.example.documentprocessor.service;
 
 import com.example.documentprocessor.model.ProcessingResult;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.google.api.client.http.AbstractInputStreamContent;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class GoogleDriveService {
 
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
+    private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
-    private final String driveApiBaseUrl = "https://www.googleapis.com/drive/v3";
-    private final String docsApiBaseUrl = "https://docs.googleapis.com/v1";
+    private Drive getDriveService(String accessToken) {
+        return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpRequestInitializer() {
+            @Override
+            public void initialize(com.google.api.client.http.HttpRequest request) throws IOException {
+                request.getHeaders().setAuthorization("Bearer " + accessToken);
+            }
+        }).setApplicationName("Document Processor").build();
+    }
 
     public ProcessingResult downloadFile(String fileId, String accessToken) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken);
+            Drive drive = getDriveService(accessToken);
 
-            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+            // Get file metadata to retrieve mimeType
+            File file = drive.files().get(fileId).setFields("mimeType").execute();
+            String mimeType = file.getMimeType();
 
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                driveApiBaseUrl + "/files/" + fileId + "?alt=media",
-                HttpMethod.GET, requestEntity, byte[].class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                String contentType = response.getHeaders().getContentType() != null ?
-                    response.getHeaders().getContentType().toString() : "application/octet-stream";
-
-                return ProcessingResult.builder()
-                    .success(true)
-                    .fileData(response.getBody())
-                    .mimeType(contentType)
-                    .fileId(fileId)
-                    .build();
-            } else {
-                return ProcessingResult.builder()
-                    .success(false)
-                    .error("Download failed: " + response.getStatusCode())
-                    .stage("File Download")
-                    .build();
+            // Download file content
+            InputStream inputStream = drive.files().get(fileId).executeMediaAsInputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
             }
+            byte[] fileData = outputStream.toByteArray();
+            inputStream.close();
+            outputStream.close();
+
+            return ProcessingResult.builder()
+                .success(true)
+                .fileData(fileData)
+                .mimeType(mimeType)
+                .fileId(fileId)
+                .build();
         } catch (Exception e) {
             log.error("Error downloading file from Google Drive", e);
             return ProcessingResult.builder()
@@ -64,49 +72,25 @@ public class GoogleDriveService {
     public ProcessingResult uploadFile(byte[] fileData, String fileName, String parentFolderId,
                                      String mimeType, String accessToken) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken);
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            Drive drive = getDriveService(accessToken);
 
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            File fileMetadata = new File()
+                .setName(fileName)
+                .setParents(Arrays.asList(parentFolderId));
 
-            // Metadata
-            String metadata = String.format(
-                "{\"name\":\"%s\",\"parents\":[\"%s\"]}",
-                fileName, parentFolderId
-            );
-            body.add("metadata", metadata);
+            AbstractInputStreamContent mediaContent = new ByteArrayContent(mimeType, fileData);
 
-            // File data
-            body.add("file", new org.springframework.core.io.ByteArrayResource(fileData) {
-                @Override
-                public String getFilename() {
-                    return fileName;
-                }
-            });
+            File uploadedFile = drive.files().create(fileMetadata, mediaContent)
+                .setFields("id")
+                .execute();
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            String uploadedFileId = uploadedFile.getId();
 
-            ResponseEntity<String> response = restTemplate.exchange(
-                driveApiBaseUrl + "/files?uploadType=multipart",
-                HttpMethod.POST, requestEntity, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                JsonNode responseJson = objectMapper.readTree(response.getBody());
-                String uploadedFileId = responseJson.path("id").asText();
-
-                return ProcessingResult.builder()
-                    .success(true)
-                    .fileId(uploadedFileId)
-                    .exportedFileId(uploadedFileId)
-                    .build();
-            } else {
-                return ProcessingResult.builder()
-                    .success(false)
-                    .error("Upload failed: " + response.getStatusCode())
-                    .stage("File Upload")
-                    .build();
-            }
+            return ProcessingResult.builder()
+                .success(true)
+                .fileId(uploadedFileId)
+                .exportedFileId(uploadedFileId)
+                .build();
         } catch (Exception e) {
             log.error("Error uploading file to Google Drive", e);
             return ProcessingResult.builder()
@@ -119,46 +103,18 @@ public class GoogleDriveService {
 
     public ProcessingResult createDocument(String title, String content, String parentFolderId, String accessToken) {
         try {
-            // First create empty document
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            Drive drive = getDriveService(accessToken);
 
-            String createRequest = String.format(
-                "{\"title\":\"%s\",\"parents\":[\"%s\"]}",
-                title, parentFolderId
-            );
+            File fileMetadata = new File()
+                .setName(title)
+                .setMimeType("application/vnd.google-apps.document")
+                .setParents(Arrays.asList(parentFolderId));
 
-            HttpEntity<String> createEntity = new HttpEntity<>(createRequest, headers);
+            File createdFile = drive.files().create(fileMetadata)
+                .setFields("id")
+                .execute();
 
-            ResponseEntity<String> createResponse = restTemplate.exchange(
-                docsApiBaseUrl + "/documents",
-                HttpMethod.POST, createEntity, String.class);
-
-            if (!createResponse.getStatusCode().is2xxSuccessful()) {
-                return ProcessingResult.builder()
-                    .success(false)
-                    .error("Document creation failed: " + createResponse.getStatusCode())
-                    .stage("Document Creation")
-                    .build();
-            }
-
-            JsonNode createJson = objectMapper.readTree(createResponse.getBody());
-            String documentId = createJson.path("documentId").asText();
-
-            // Then update with content if provided
-            if (content != null && !content.isEmpty()) {
-                String updateRequest = String.format(
-                    "{\"requests\":[{\"insertText\":{\"location\":{\"index\":1},\"text\":\"%s\"}}]}",
-                    content.replace("\"", "\\\"").replace("\n", "\\n")
-                );
-
-                HttpEntity<String> updateEntity = new HttpEntity<>(updateRequest, headers);
-
-                restTemplate.exchange(
-                    docsApiBaseUrl + "/documents/" + documentId + ":batchUpdate",
-                    HttpMethod.POST, updateEntity, String.class);
-            }
+            String documentId = createdFile.getId();
 
             return ProcessingResult.builder()
                 .success(true)
@@ -166,7 +122,7 @@ public class GoogleDriveService {
                 .exportedFileId(documentId)
                 .build();
         } catch (Exception e) {
-            log.error("Error creating document in Google Docs", e);
+            log.error("Error creating document in Google Drive", e);
             return ProcessingResult.builder()
                 .success(false)
                 .error(e.getMessage())

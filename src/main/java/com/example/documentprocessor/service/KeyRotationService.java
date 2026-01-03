@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class KeyRotationService {
 
     private final CsvMapper csvMapper;
+    private final GoogleDriveService googleDriveService;
 
     private final boolean localTesting = true;
     private final String localKeysCsvPath = "./test_data/gemini_keys.csv";
@@ -103,10 +104,39 @@ public class KeyRotationService {
     }
 
     private void loadKeysFromGoogleDrive() {
-        // TODO: Implement Google Drive CSV reading
-        // For now, this would need to download the CSV from Google Drive
-        // and parse it similar to the local file approach
-        log.warn("Google Drive key loading not implemented yet");
+        try {
+            // This would need an access token, but for now we'll assume it's available
+            // In a real implementation, you'd get this from configuration or service account
+            String accessToken = ""; // TODO: Configure access token for key file access
+
+            if (accessToken == null || accessToken.isEmpty()) {
+                log.warn("No access token configured for Google Drive key loading");
+                return;
+            }
+
+            var downloadResult = googleDriveService.downloadFile(keysCsvFileId, accessToken);
+            if (!downloadResult.isSuccess()) {
+                log.error("Failed to download keys CSV from Google Drive: {}", downloadResult.getError());
+                return;
+            }
+
+            // Parse the CSV content
+            CsvSchema schema = CsvSchema.emptySchema().withHeader();
+            MappingIterator<Map<String, String>> iterator =
+                csvMapper.readerFor(Map.class).with(schema).readValues(downloadResult.getFileData());
+
+            while (iterator.hasNext()) {
+                Map<String, String> row = iterator.next();
+                String key = row.get("api_key");
+                if (key != null && !key.trim().isEmpty()) {
+                    availableKeys.add(key.trim());
+                }
+            }
+
+            log.info("Loaded {} keys from Google Drive CSV file", availableKeys.size());
+        } catch (Exception e) {
+            log.error("Error loading keys from Google Drive", e);
+        }
     }
 
     public int getKeyCount() {

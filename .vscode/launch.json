@@ -8,6 +8,8 @@
             "mainClass": "com.example.documentprocessor.Application",
             "projectName": "extract-translate-structure-document",
             "vmArgs": "-Dspring.profiles.active=dev",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
                 "GOOGLE_DRIVE_API_KEY": "dev-drive-key",
                 "GOOGLE_DRIVE_WATCH_FOLDER_ID": "dev-watch-folder",

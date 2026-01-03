@@ -16,6 +16,7 @@ configurations {
 
 repositories {
     mavenCentral()
+    google()
     maven {
         url = uri("https://maven.google.com")
     }
@@ -35,6 +36,10 @@ dependencies {
 
     // Google Cloud Vertex AI SDK (Latest)
     implementation("com.google.cloud:google-cloud-aiplatform:3.40.0")
+
+    // Google API Client for Drive
+    implementation("com.google.api-client:google-api-client:2.4.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
 
     // Apache POI for DOCX generation
     implementation("org.apache.poi:poi-ooxml:5.2.5")

@@ -45,6 +45,7 @@ public class CsvProcessingService {
                 .targetLangs(row.get("targetLangs"))
                 .bookName(row.get("bookName"))
                 .status(row.get("status"))
+                .accessToken(row.get("accessToken"))
                 .rowIndex(rowIndex)
                 .originalStatus(row.get("status"))
                 .processingStartTime(LocalDateTime.now())
@@ -89,13 +90,14 @@ public class CsvProcessingService {
 
         // Create CSV content
         StringBuilder csvContent = new StringBuilder();
-        csvContent.append("fileId,targetLangs,bookName,status,errorMessage\n");
+        csvContent.append("fileId,targetLangs,bookName,status,accessToken,errorMessage\n");
 
         for (DocumentRecord record : records) {
             csvContent.append(escapeCsvField(record.getFileId())).append(",");
             csvContent.append(escapeCsvField(record.getTargetLangs())).append(",");
             csvContent.append(escapeCsvField(record.getBookName())).append(",");
             csvContent.append(escapeCsvField(record.getStatus())).append(",");
+            csvContent.append(escapeCsvField(record.getAccessToken())).append(",");
 
             String errorMessage = record.hasErrors() ?
                 record.getErrors().stream()
