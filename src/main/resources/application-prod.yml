@@ -34,8 +34,6 @@ app:
     cred-id: ${GMAIL_CRED_ID}
     api-key: ${GMAIL_API_KEY}
 
-  gemini:
-    api-key: ${GEMINI_API_KEY}
 
   workflow:
     ids:

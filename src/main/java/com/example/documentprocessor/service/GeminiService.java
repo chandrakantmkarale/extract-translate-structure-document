@@ -20,6 +20,7 @@ public class GeminiService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final KeyRotationService keyRotationService;
 
     @Value("${gemini.api.url}")
     private String generateUrl;
@@ -27,8 +28,6 @@ public class GeminiService {
     @Value("${gemini.api.model}")
     private String modelName;
 
-    @Value("${app.gemini.api-key}")
-    private String geminiApiKey;
 
     public ProcessingResult performOcr(byte[] fileData, String mimeType, String prompt) {
         try {
@@ -60,6 +59,15 @@ public class GeminiService {
             log.info("Calling unified Gemini API for OCR with model: {}, mimeType: {}, file size: {} bytes",
                 modelName, mimeType, fileData.length);
 
+            ProcessingResult keyResult = keyRotationService.getNextKey();
+            if (!keyResult.isSuccess()) {
+                return ProcessingResult.builder()
+                    .success(false)
+                    .error(keyResult.getError())
+                    .stage("OCR")
+                    .build();
+            }
+            String geminiApiKey = keyResult.getSelectedKey();
             String urlWithKey = generateUrl + "?key=" + geminiApiKey;
 
             ResponseEntity<String> response = restTemplate.exchange(
@@ -114,6 +122,15 @@ public class GeminiService {
             log.info("Calling unified Gemini API for translation with model: {}, target language: {}",
                 modelName, targetLanguage);
 
+            ProcessingResult keyResult = keyRotationService.getNextKey();
+            if (!keyResult.isSuccess()) {
+                return ProcessingResult.builder()
+                    .success(false)
+                    .error(keyResult.getError())
+                    .stage("Translation")
+                    .build();
+            }
+            String geminiApiKey = keyResult.getSelectedKey();
             String urlWithKey = generateUrl + "?key=" + geminiApiKey;
 
             ResponseEntity<String> response = restTemplate.exchange(
@@ -149,7 +166,13 @@ public class GeminiService {
 
     public void listAvailableModels() {
         try {
-            String listModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiApiKey;
+            ProcessingResult keyResult = keyRotationService.getNextKey();
+            if (!keyResult.isSuccess()) {
+                log.error("Failed to get API key for listing models: {}", keyResult.getError());
+                return;
+            }
+            String apiKey = keyResult.getSelectedKey();
+            String listModelsUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
 
             ResponseEntity<String> response = restTemplate.getForEntity(listModelsUrl, String.class);
 
