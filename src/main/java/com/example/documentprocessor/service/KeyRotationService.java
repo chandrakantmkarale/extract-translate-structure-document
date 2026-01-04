@@ -9,9 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,9 +99,28 @@ public class KeyRotationService {
             throw new IOException("Keys CSV file not found: " + localKeysCsvPath);
         }
 
+        byte[] fileData = Files.readAllBytes(csvFile.toPath());
+
+        // Parse the CSV content with encoding fallback
         CsvSchema schema = CsvSchema.emptySchema().withHeader();
-        MappingIterator<Map<String, String>> iterator =
-            csvMapper.readerFor(Map.class).with(schema).readValues(csvFile);
+        MappingIterator<Map<String, String>> iterator = null;
+
+        // Try UTF-8 first
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(fileData);
+            InputStreamReader reader = new InputStreamReader(bais, StandardCharsets.UTF_8);
+            iterator = csvMapper.readerFor(Map.class).with(schema).readValues(reader);
+        } catch (Exception e) {
+            log.warn("Failed to parse local CSV with UTF-8, trying ISO-8859-1: {}", e.getMessage());
+            // Try ISO-8859-1 as fallback
+            try {
+                ByteArrayInputStream bais = new ByteArrayInputStream(fileData);
+                InputStreamReader reader = new InputStreamReader(bais, StandardCharsets.ISO_8859_1);
+                iterator = csvMapper.readerFor(Map.class).with(schema).readValues(reader);
+            } catch (Exception e2) {
+                throw new IOException("Failed to parse CSV with both UTF-8 and ISO-8859-1", e2);
+            }
+        }
 
         while (iterator.hasNext()) {
             Map<String, String> row = iterator.next();
@@ -128,10 +147,29 @@ public class KeyRotationService {
                 return;
             }
 
-            // Parse the CSV content
+            byte[] fileData = downloadResult.getFileData();
+
+            // Parse the CSV content with encoding fallback
             CsvSchema schema = CsvSchema.emptySchema().withHeader();
-            MappingIterator<Map<String, String>> iterator =
-                csvMapper.readerFor(Map.class).with(schema).readValues(downloadResult.getFileData());
+            MappingIterator<Map<String, String>> iterator = null;
+
+            // Try UTF-8 first
+            try {
+                ByteArrayInputStream bais = new ByteArrayInputStream(fileData);
+                InputStreamReader reader = new InputStreamReader(bais, StandardCharsets.UTF_8);
+                iterator = csvMapper.readerFor(Map.class).with(schema).readValues(reader);
+            } catch (Exception e) {
+                log.warn("Failed to parse CSV with UTF-8, trying ISO-8859-1: {}", e.getMessage());
+                // Try ISO-8859-1 as fallback
+                try {
+                    ByteArrayInputStream bais = new ByteArrayInputStream(fileData);
+                    InputStreamReader reader = new InputStreamReader(bais, StandardCharsets.ISO_8859_1);
+                    iterator = csvMapper.readerFor(Map.class).with(schema).readValues(reader);
+                } catch (Exception e2) {
+                    log.error("Failed to parse CSV with both UTF-8 and ISO-8859-1: {}", e2.getMessage());
+                    return;
+                }
+            }
 
             while (iterator.hasNext()) {
                 Map<String, String> row = iterator.next();
