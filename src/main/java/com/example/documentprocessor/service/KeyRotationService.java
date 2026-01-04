@@ -38,7 +38,7 @@ public class KeyRotationService {
     @Value("${app.local-keys-csv-path:./test_data/gemini_keys.csv}")
     private String localKeysCsvPath;
 
-    @Value("${app.keys-csv-file-id:}")
+    @Value("${app.google.drive.keys-csv-file-id:}")
     private String keysCsvFileId;
 
     // In-memory key rotation state
@@ -86,11 +86,11 @@ public class KeyRotationService {
     private void loadKeys() throws IOException {
         availableKeys.clear();
 
-        if (localTesting && keysCsvFileId == null || keysCsvFileId.isEmpty()) {
-            loadKeysFromLocalFile();
-        } else {
+        //if (localTesting && keysCsvFileId == null || keysCsvFileId.isEmpty()) {
+        //    loadKeysFromLocalFile();
+        //} else {
             loadKeysFromGoogleDrive();
-        }
+        //}
     }
 
     private void loadKeysFromLocalFile() throws IOException {

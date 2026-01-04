@@ -34,7 +34,7 @@ app:
       export-translate-folder-id: ${EXPORT_TRANSLATE_FOLDER_ID:dev-translate-folder}
       export-persist-folder-id: ${EXPORT_PERSIST_FOLDER_ID:dev-persist-folder}
       error-log-folder-id: 1ZqKa4EnXhdMlbq6Wh_0jho9Qb42UqcCF
-      keys-csv-file-id: 19B-lLAyeK9ogLSoK5E_b0o8bnbQ_REWo
+      keys-csv-file-id: 1su_3XEbE8TblLZZxdm3J5cei2bO-nP10Zxk85KX9KPg
       prompts-folder-id: 1ksRa7ybp__QPo-J7Hqul1n6NKtD8wY8w
       translation-corrections-folder-id: 1m7heGQKbeZf7hKbnlkCBx6lMnlGryCzz
 
